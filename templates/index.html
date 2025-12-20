@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Octo Task</title>
+    <style>
+        /* Minimal styling for clarity */
+        body {
+            font-family: sans-serif;
+            max-width: 800px;
+            margin: 2rem auto;
+            padding: 0 1rem;
+        }
+
+        .task-card {
+            border: 1px solid #ddd;
+            padding: 15px;
+            margin-bottom: 15px;
+            border-radius: 8px;
+            background-color: #fff;
+        }
+
+        .task-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .priority-badge {
+            font-weight: bold;
+            color: #d32f2f;
+        }
+
+        /* Subtask specific styling */
+        .subtask-list {
+            margin-top: 10px;
+            padding-left: 20px;
+            border-left: 3px solid #eee;
+        }
+
+        .subtask-item {
+            list-style-type: none;
+            padding: 5px 0;
+            color: #555;
+            /* Lighter color to reduce noise */
+            font-size: 0.9em;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>Task Manager</h1>
+
+    <form method="POST" style="margin-bottom: 30px;">
+        <input type="text" name="task_title" placeholder="What do you need to do?" required
+            style="padding: 10px; width: 70%;">
+        <button type="submit" style="padding: 10px;">Add Task</button>
+    </form>
+
+    <h2>Your Tasks</h2>
+
+    {% for task in tasks %}
+    <div class="task-card">
+        <div class="task-header">
+            <h3>{{ task.title }}</h3>
+            <span>
+                Score: <span class="priority-badge">{{ task.priority_score|round(1) }}</span>
+                <small>({{ task.status }})</small>
+            </span>
+        </div>
+
+        {% if task.subtasks %}
+        <div class="subtask-list">
+            <strong>Breakdown:</strong>
+            <ul>
+                {% for sub in task.subtasks|sort(attribute='order_index') %}
+                <li class="subtask-item">
+                    <input type="checkbox" disabled> {{ sub.title }}
+                </li>
+                {% endfor %}
+            </ul>
+        </div>
+        {% endif %}
+    </div>
+    {% else %}
+    <p>No tasks yet. Enjoy your free time!</p>
+    {% endfor %}
+
+</body>
+
+</html>
