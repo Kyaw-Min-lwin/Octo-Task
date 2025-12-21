@@ -5,6 +5,9 @@ import models
 from config import SQLALCHEMY_DATABASE_URI, SQLALCHEMY_TRACK_MODIFICATIONS
 import random
 from ai_service import analyze_task
+from flask import jsonify
+from services.scoring_service import predict_task_metrics
+
 
 app = Flask(__name__)
 app.config["SQLALCHEMY_DATABASE_URI"] = SQLALCHEMY_DATABASE_URI
@@ -76,6 +79,18 @@ def index():
     # For GET: fetch all tasks ordered by priority_score descending
     tasks = models.Task.query.order_by(models.Task.priority_score.desc()).all()
     return render_template("index.html", tasks=tasks)
+
+
+@app.route("/api/predict", methods=["POST"])
+def predict():
+    data = request.get_json()
+    text = data.get("title", "")
+    if not text:
+        return jsonify({"error": "No text provided"}), 400
+
+    # Get AI prediction
+    metrics = predict_task_metrics(text)
+    return jsonify(metrics)
 
 
 if __name__ == "__main__":
