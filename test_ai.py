@@ -5,7 +5,7 @@ test_tasks = [
     "Play a good mobile game to pass time",  # Should be Interesting, Not Scary
     "Do my taxes",  # Should be Boring, Scary
     "Buy milk",
-    "Write essay due in 1 hour",  # Should be Easy, Low Interest
+    "Write essay due in 2 hours",
 ]
 
 print(f"{'TASK':<40} | {'URG':<5} | {'FEAR':<5} | {'INT':<5} | {'SCORE':<5}")

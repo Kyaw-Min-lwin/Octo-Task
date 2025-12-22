@@ -1,21 +1,29 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Octo Task</title>
     <style>
-        body { font-family: sans-serif; max-width: 800px; margin: 2rem auto; padding: 0 1rem; }
-        
+        body {
+            font-family: sans-serif;
+            max-width: 800px;
+            margin: 2rem auto;
+            padding: 0 1rem;
+        }
+
         .smart-form {
             background: #f8f9fa;
             padding: 20px;
             border-radius: 10px;
             border: 1px solid #ddd;
         }
-        
-        .input-group { margin-bottom: 15px; }
-        
+
+        .input-group {
+            margin-bottom: 15px;
+        }
+
         input[type="text"] {
             width: 100%;
             padding: 12px;
@@ -23,23 +31,40 @@
             border: 2px solid #ddd;
             border-radius: 5px;
         }
-        
+
         .sliders-container {
             display: grid;
             grid-template-columns: 1fr 1fr 1fr;
             gap: 20px;
             margin-top: 20px;
-            opacity: 0.5; /* Dimmed until user types */
+            opacity: 0.5;
+            /* Dimmed until user types */
             transition: opacity 0.3s;
         }
-        
-        .slider-group label { display: block; font-weight: bold; margin-bottom: 5px; }
-        .slider-group span { float: right; color: #666; }
-        
+
+        .slider-group label {
+            display: block;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .slider-group span {
+            float: right;
+            color: #666;
+        }
+
         /* Different colors for different sliders */
-        #urgency { accent-color: #d32f2f; }
-        #fear { accent-color: #7b1fa2; }
-        #interest { accent-color: #2e7d32; }
+        #urgency {
+            accent-color: #d32f2f;
+        }
+
+        #fear {
+            accent-color: #7b1fa2;
+        }
+
+        #interest {
+            accent-color: #2e7d32;
+        }
 
         .score-display {
             text-align: center;
@@ -49,6 +74,7 @@
         }
     </style>
 </head>
+
 <body>
 
     <h1>Octo Task 🐙</h1>
@@ -65,107 +91,117 @@
                     <label>Urgency ⏰ <span id="val_urgency">5.0</span></label>
                     <input type="range" id="urgency" name="urgency" min="1" max="10" step="0.1" value="5">
                 </div>
-            
+
                 <div class="slider-group">
                     <label>Fear/Dread 👻 <span id="val_fear">5.0</span></label>
                     <input type="range" id="fear" name="fear" min="1" max="10" step="0.1" value="5">
                 </div>
-            
+
                 <div class="slider-group">
                     <label>Interest 🎮 <span id="val_interest">5.0</span></label>
                     <input type="range" id="interest" name="interest" min="1" max="10" step="0.1" value="5">
                 </div>
             </div>
-            
+
             <div class="score-display">
                 Priority Score: <span id="final_score" style="color: blue;">--</span>
             </div>
-            
+
             <button type="submit"
                 style="width: 100%; padding: 10px; margin-top: 15px; background: black; color: white; border: none; border-radius: 5px; cursor: pointer;">
                 Add Task
             </button>
-            </form>
-            </div>
+        </form>
+        </div>
 
     <h2>Your Tasks</h2>
     <ul>
         {% for task in tasks %}
         <li>{{ task.title }} (Score: {{ task.priority_score|round(2) }})</li>
         {% endfor %}
-        </ul>
-<script>
-    const titleInput = document.getElementById('task_title');
-    const slidersArea = document.getElementById('sliders-area');
+    </ul>
+    <script>
+        const titleInput = document.getElementById('task_title');
+        const slidersArea = document.getElementById('sliders-area');
 
-    // Sliders
-    const s_urg = document.getElementById('urgency');
-    const s_fear = document.getElementById('fear');
-    const s_int = document.getElementById('interest');
+            // Sliders
+            const s_urg = document.getElementById('urgency');
+            const s_fear = document.getElementById('fear');
+            const s_int = document.getElementById('interest');
 
-    // Displays
-    const d_urg = document.getElementById('val_urgency');
-    const d_fear = document.getElementById('val_fear');
-    const d_int = document.getElementById('val_interest');
-    const d_score = document.getElementById('final_score');
+            // Displays
+            const d_urg = document.getElementById('val_urgency');
+            const d_fear = document.getElementById('val_fear');
+            const d_int = document.getElementById('val_interest');
+            const d_score = document.getElementById('final_score');
 
-    // Calculate Score Locally (Instant Feedback)
-    function calculateScore() {
-        const u = parseFloat(s_urg.value);
-        const f = parseFloat(s_fear.value);
-        const i = parseFloat(s_int.value);
+            // Calculate Score Locally (Instant Feedback)
+            function calculateScore() {
+                const u = parseFloat(s_urg.value);
+                const f = parseFloat(s_fear.value);
+                const i = parseFloat(s_int.value);
 
-        // The TMT Formula in JS
-        const impulsiveness = 1.5;
-        const expectancy = Math.max(0.1, 10 - f);
-        const delay = Math.max(0, 10 - u);
+            // The TMT Formula (Must match scoring_service.py exactly!)
+            const impulsiveness = 1.5;
 
-        const score = (expectancy * i) / (1 + (impulsiveness * delay));
+            // Expectancy: Matches 'max(1, 12 - fear)'
+            const expectancy = Math.max(1, 12 - f);
 
-        // Update UI
-        d_urg.textContent = u;
-        d_fear.textContent = f;
-        d_int.textContent = i;
-        d_score.textContent = score.toFixed(2);
-    }
+            // Delay: Matches 'max(0.1, 10 - urgency)'
+            const delay = Math.max(0.1, 10 - u);
 
-    // Listen for slider changes
-    [s_urg, s_fear, s_int].forEach(s => s.addEventListener('input', calculateScore));
+            // Value: Matches interest
+            const value = i;
 
-    // AI PREDICTION LOGIC
-    let typingTimer;
-    titleInput.addEventListener('keyup', () => {
-        clearTimeout(typingTimer);
-        slidersArea.style.opacity = "1";
+            // Formula: (E * V) / (1 + I * D)
+            const denominator = 1 + (impulsiveness * delay);
+            const score = (expectancy * value) / denominator;
 
-        // Wait 1 second after typing stops to call AI
-        typingTimer = setTimeout(async () => {
-            const text = titleInput.value;
-            if (text.length < 3) return;
+            // Update UI
+            d_urg.textContent = u;
+            d_fear.textContent = f;
+            d_int.textContent = i;
+            d_score.textContent = score.toFixed(2);
+        }
 
-            d_score.textContent = "AI Analyzing...";
+            // Listen for slider changes
+            [s_urg, s_fear, s_int].forEach(s => s.addEventListener('input', calculateScore));
 
-            try {
-                const response = await fetch('/api/predict', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ title: text })
-                });
-                const data = await response.json();
+            // AI PREDICTION LOGIC
+            let typingTimer;
+            titleInput.addEventListener('keyup', () => {
+                clearTimeout(typingTimer);
+                slidersArea.style.opacity = "1";
 
-                // Animate sliders to new positions
-                s_urg.value = data.urgency;
-                s_fear.value = data.fear;
-                s_int.value = data.interest;
+            // Wait 1 second after typing stops to call AI
+            typingTimer = setTimeout(async () => {
+                const text = titleInput.value;
+                if (text.length < 3) return;
 
-                calculateScore(); // Update the score text
+                d_score.textContent = "AI Analyzing...";
 
-            } catch (error) {
-                console.error("AI Error:", error);
-            }
-        }, 800);
-    });
-</script>
+                try {
+                    const response = await fetch('/api/predict', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ title: text })
+                    });
+                    const data = await response.json();
+
+                    // Animate sliders to new positions
+                    s_urg.value = data.urgency;
+                    s_fear.value = data.fear;
+                    s_int.value = data.interest;
+
+                    calculateScore(); // Update the score text
+
+                } catch (error) {
+                    console.error("AI Error:", error);
+                }
+            }, 800);
+        });
+                </script>
 
 </body>
+
 </html>
