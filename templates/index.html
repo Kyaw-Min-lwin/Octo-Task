@@ -4,75 +4,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Octo Task</title>
-    <style>
-        body {
-            font-family: sans-serif;
-            max-width: 800px;
-            margin: 2rem auto;
-            padding: 0 1rem;
-        }
+    <title>Octo Task 🐙</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
 
-        .smart-form {
-            background: #f8f9fa;
-            padding: 20px;
-            border-radius: 10px;
-            border: 1px solid #ddd;
-        }
-
-        .input-group {
-            margin-bottom: 15px;
-        }
-
-        input[type="text"] {
-            width: 100%;
-            padding: 12px;
-            font-size: 1.1em;
-            border: 2px solid #ddd;
-            border-radius: 5px;
-        }
-
-        .sliders-container {
-            display: grid;
-            grid-template-columns: 1fr 1fr 1fr;
-            gap: 20px;
-            margin-top: 20px;
-            opacity: 0.5;
-            /* Dimmed until user types */
-            transition: opacity 0.3s;
-        }
-
-        .slider-group label {
-            display: block;
-            font-weight: bold;
-            margin-bottom: 5px;
-        }
-
-        .slider-group span {
-            float: right;
-            color: #666;
-        }
-
-        /* Different colors for different sliders */
-        #urgency {
-            accent-color: #d32f2f;
-        }
-
-        #fear {
-            accent-color: #7b1fa2;
-        }
-
-        #interest {
-            accent-color: #2e7d32;
-        }
-
-        .score-display {
-            text-align: center;
-            margin-top: 20px;
-            font-size: 1.5em;
-            font-weight: bold;
-        }
-    </style>
 </head>
 
 <body>
@@ -81,126 +15,74 @@
 
     <div class="smart-form">
         <form method="POST">
-            <div class="input-group">
-                <input type="text" id="task_title" name="task_title"
-                    placeholder="What is the task? (e.g. 'Write essay due tomorrow')" required autocomplete="off">
-            </div>
-
+            <input type="text" id="task_title" name="task_title" placeholder="What is the mission?" required autocomplete="off">
             <div class="sliders-container" id="sliders-area">
-                <div class="slider-group">
-                    <label>Urgency ⏰ <span id="val_urgency">5.0</span></label>
-                    <input type="range" id="urgency" name="urgency" min="1" max="10" step="0.1" value="5">
+                <div><label>Urgency <span id="val_urgency">5.0</span></label><input type="range" id="urgency" name="urgency" min="1"
+                        max="10" step="0.1" value="5"></div>
+                <div><label>Fear <span id="val_fear">5.0</span></label><input type="range" id="fear" name="fear" min="1" max="10"
+                        step="0.1" value="5"></div>
+                <div><label>Interest <span id="val_interest">5.0</span></label><input type="range" id="interest" name="interest" min="1"
+                        max="10" step="0.1" value="5"></div>
                 </div>
-
-                <div class="slider-group">
-                    <label>Fear/Dread 👻 <span id="val_fear">5.0</span></label>
-                    <input type="range" id="fear" name="fear" min="1" max="10" step="0.1" value="5">
-                </div>
-
-                <div class="slider-group">
-                    <label>Interest 🎮 <span id="val_interest">5.0</span></label>
-                    <input type="range" id="interest" name="interest" min="1" max="10" step="0.1" value="5">
-                </div>
+            <div class="score-display">Priority: <span id="final_score">--</span></div>
+            <button type="submit" class="add-btn">INITIATE TASK</button>
+            </form>
             </div>
 
-            <div class="score-display">
-                Priority Score: <span id="final_score" style="color: blue;">--</span>
-            </div>
-
-            <button type="submit"
-                style="width: 100%; padding: 10px; margin-top: 15px; background: black; color: white; border: none; border-radius: 5px; cursor: pointer;">
-                Add Task
-            </button>
-        </form>
-        </div>
-
-    <h2>Your Tasks</h2>
-    <ul>
+    <ul class="task-list">
         {% for task in tasks %}
-        <li>{{ task.title }} (Score: {{ task.priority_score|round(2) }})</li>
+        <li class="task-card {{ task.status }}" id="card-{{ task.id }}" data-status="{{ task.status }}"
+            data-start="{% if task.last_started_at %}{{ task.last_started_at.isoformat() }}{% endif %}"
+            data-accumulated="{{ task.time_spent or 0 }}">
+            <div class="task-header">
+                <div>
+                    <h3 class="task-title">{{ task.title }}</h3>
+                    <div class="task-meta">
+                        Priority: {{ task.priority_score|round(2) }} |
+                        Time Spent:
+                        <span class="live-timer" id="timer-{{ task.id }}">
+                            {% set total_seconds = task.time_spent or 0 %}
+                            {% set m = (total_seconds / 60)|int %}
+                            {% set s = total_seconds % 60 %}
+                            {{ m }}:{{ "%02d"|format(s) }}m
+                        </span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="controls">
+                {% if task.status == 'active' %}
+                <button class="btn btn-pause" onclick="updateState({{ task.id }}, 'pause')">⏸ Pause</button>
+                <button class="btn btn-done" onclick="updateState({{ task.id }}, 'complete')">✅ Complete</button>
+                {% elif task.status != 'completed' %}
+                <button class="btn btn-start" onclick="updateState({{ task.id }}, 'start')">▶ Start Focus</button>
+                {% if task.status == 'pending' or task.status == 'paused' %}
+                <button class="btn btn-done" onclick="updateState({{ task.id }}, 'complete')">Done</button>
+                {% endif %}
+                {% else %}
+                <span>Completed on {{ task.completed_at.strftime('%Y-%m-%d') }}</span>
+                {% endif %}
+            </div>
+
+            {% if task.subtasks %}
+            <div class="subtasks">
+                {% for sub in task.subtasks %}
+                <div class="subtask-item">
+                    <input type="checkbox" onchange="toggleSubtask({{ sub.id }})" {% if sub.status=='completed' %}checked{% endif
+                        %}>
+            
+                    <span style="{% if sub.status == 'completed' %}text-decoration: line-through; color: #aaa;{% endif %}">
+                        {{ sub.title }}
+                    </span>
+                </div>
+                {% endfor %}
+                </div>
+                {% endif %}
+                </li>
         {% endfor %}
     </ul>
-    <script>
-        const titleInput = document.getElementById('task_title');
-        const slidersArea = document.getElementById('sliders-area');
 
-            // Sliders
-            const s_urg = document.getElementById('urgency');
-            const s_fear = document.getElementById('fear');
-            const s_int = document.getElementById('interest');
-
-            // Displays
-            const d_urg = document.getElementById('val_urgency');
-            const d_fear = document.getElementById('val_fear');
-            const d_int = document.getElementById('val_interest');
-            const d_score = document.getElementById('final_score');
-
-            // Calculate Score Locally (Instant Feedback)
-            function calculateScore() {
-                const u = parseFloat(s_urg.value);
-                const f = parseFloat(s_fear.value);
-                const i = parseFloat(s_int.value);
-
-            // The TMT Formula (Must match scoring_service.py exactly!)
-            const impulsiveness = 1.5;
-
-            // Expectancy: Matches 'max(1, 12 - fear)'
-            const expectancy = Math.max(1, 12 - f);
-
-            // Delay: Matches 'max(0.1, 10 - urgency)'
-            const delay = Math.max(0.1, 10 - u);
-
-            // Value: Matches interest
-            const value = i;
-
-            // Formula: (E * V) / (1 + I * D)
-            const denominator = 1 + (impulsiveness * delay);
-            const score = (expectancy * value) / denominator;
-
-            // Update UI
-            d_urg.textContent = u;
-            d_fear.textContent = f;
-            d_int.textContent = i;
-            d_score.textContent = score.toFixed(2);
-        }
-
-            // Listen for slider changes
-            [s_urg, s_fear, s_int].forEach(s => s.addEventListener('input', calculateScore));
-
-            // AI PREDICTION LOGIC
-            let typingTimer;
-            titleInput.addEventListener('keyup', () => {
-                clearTimeout(typingTimer);
-                slidersArea.style.opacity = "1";
-
-            // Wait 1 second after typing stops to call AI
-            typingTimer = setTimeout(async () => {
-                const text = titleInput.value;
-                if (text.length < 3) return;
-
-                d_score.textContent = "AI Analyzing...";
-
-                try {
-                    const response = await fetch('/api/predict', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ title: text })
-                    });
-                    const data = await response.json();
-
-                    // Animate sliders to new positions
-                    s_urg.value = data.urgency;
-                    s_fear.value = data.fear;
-                    s_int.value = data.interest;
-
-                    calculateScore(); // Update the score text
-
-                } catch (error) {
-                    console.error("AI Error:", error);
-                }
-            }, 800);
-        });
-                </script>
+    <script src="{{url_for('static', filename='script.js')}}"></script>
 
 </body>
 

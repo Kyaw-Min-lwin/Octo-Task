@@ -1,4 +1,3 @@
-
 from datetime import datetime
 from extensions import db
 
@@ -24,7 +23,18 @@ class Task(db.Model):
     title = db.Column(db.String(200), nullable=False)
     description = db.Column(db.Text)
 
-    status = db.Column(db.String(20), default="pending")
+    # --- UPDATED / NEW FIELDS ---
+    status = db.Column(
+        db.String(20), default="pending"
+    )  # pending, active, paused, completed
+    priority_score = db.Column(db.Float)
+
+    # New Time Tracking Fields
+    time_spent = db.Column(db.Integer, default=0)  # Total seconds focused
+    last_started_at = db.Column(
+        db.DateTime, nullable=True
+    )  # For calculating session delta
+
     priority_score = db.Column(db.Float)
     current_order = db.Column(db.Integer)
 
