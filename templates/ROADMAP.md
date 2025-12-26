@@ -5,8 +5,8 @@
 - [x] Basic Flask Setup
 - [x] AI Integration (Gemini API) for Task Analysis
 - [x] Task Breakdown Visualization
-- [ ] Task Execution Mode (Start/Stop/Complete buttons)
-- [ ] basic "Focus Timer" logic
+- [x] Task Execution Mode (Start/Stop/Complete buttons)
+- [x] basic "Focus Timer" logic
 
 ## Phase 2: The User Experience
 - [ ] User Authentication (Login/Register/Logout)

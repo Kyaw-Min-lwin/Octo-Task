@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone
 from extensions import db
 
 class User(db.Model):
@@ -9,7 +9,7 @@ class User(db.Model):
     username = db.Column(db.String(80), unique=True, nullable=False)
     password_hash = db.Column(db.String(256), nullable=False)
 
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=datetime.now(timezone.utc))
 
     tasks = db.relationship("Task", backref="user", lazy=True)
 
@@ -38,8 +38,12 @@ class Task(db.Model):
     priority_score = db.Column(db.Float)
     current_order = db.Column(db.Integer)
 
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=datetime.now(timezone.utc))
+    updated_at = db.Column(
+        db.DateTime,
+        default=datetime.now(timezone.utc),
+        onupdate=datetime.now(timezone.utc),
+    )
     completed_at = db.Column(db.DateTime)
 
     subtasks = db.relationship("Subtask", backref="task", lazy=True)
@@ -55,10 +59,12 @@ class TaskAnalysis(db.Model):
     fear_score = db.Column(db.Float)
     interest_score = db.Column(db.Float)
 
+    difficulty_score = db.Column(db.Integer)  # Scale 1-10
+
     confidence = db.Column(db.Float)
     model_version = db.Column(db.String(50))
 
-    analyzed_at = db.Column(db.DateTime, default=datetime.utcnow)
+    analyzed_at = db.Column(db.DateTime, default=datetime.now(timezone.utc))
 
 class TaskScore(db.Model):
     __tablename__ = "task_scores"
@@ -69,7 +75,7 @@ class TaskScore(db.Model):
     final_score = db.Column(db.Float, nullable=False)
     formula_version = db.Column(db.String(50))
 
-    calculated_at = db.Column(db.DateTime, default=datetime.utcnow)
+    calculated_at = db.Column(db.DateTime, default=datetime.now(timezone.utc))
 
 class Subtask(db.Model):
     __tablename__ = "subtasks"
@@ -77,7 +83,7 @@ class Subtask(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     task_id = db.Column(db.Integer, db.ForeignKey("tasks.id"), nullable=False)
 
-    title = db.Column(db.String(200), nullable=False)
+    title = db.Column(db.String(500), nullable=False)
     description = db.Column(db.Text)
 
     order_index = db.Column(db.Integer)
@@ -86,7 +92,7 @@ class Subtask(db.Model):
     estimated_effort = db.Column(db.Integer)
     created_by = db.Column(db.String(20))  # system / user / ai
 
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=datetime.now(timezone.utc))
     completed_at = db.Column(db.DateTime)
 
 
@@ -97,7 +103,7 @@ class TaskSession(db.Model):
     task_id = db.Column(db.Integer, db.ForeignKey("tasks.id"), nullable=False)
     user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
 
-    started_at = db.Column(db.DateTime, default=datetime.utcnow)
+    started_at = db.Column(db.DateTime, default=datetime.now(timezone.utc))
     ended_at = db.Column(db.DateTime)
 
     active = db.Column(db.Boolean, default=True)
@@ -112,7 +118,7 @@ class ProgressLog(db.Model):
     progress_type = db.Column(db.String(20))  # checkpoint / partial / completed
     note = db.Column(db.Text)
 
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=datetime.now(timezone.utc))
 
 class Notification(db.Model):
     __tablename__ = "notifications"
@@ -124,4 +130,4 @@ class Notification(db.Model):
     message = db.Column(db.Text)
     read = db.Column(db.Boolean, default=False)
 
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=datetime.now(timezone.utc))

@@ -217,16 +217,15 @@ def toggle_subtask(subtask_id):
 
 @app.route("/recommend_switch/<int:current_task_id>", methods=["GET"])
 def recommend_switch(current_task_id):
-    current_task = models.Task.query.get(current_task_id)
+    # Find a task that is EASIER (Lower Difficulty) and INTERESTING
     recovery_task = (
         models.Task.query.join(models.TaskAnalysis)
         .filter(
             models.Task.id != current_task_id,
             models.Task.status == "pending",
-            models.TaskAnalysis.fear_score < 5.0,
-            models.TaskAnalysis.interest_score > 6.0,
+            models.TaskAnalysis.difficulty_score < 6,  # Easy tasks only
         )
-        .order_by(models.TaskAnalysis.urgency_score.desc())
+        .order_by(models.TaskAnalysis.interest_score.desc())  # Most interesting first
         .first()
     )
 
@@ -234,7 +233,7 @@ def recommend_switch(current_task_id):
         return jsonify(
             {
                 "found": True,
-                "message": f"You seem stuck. Let's switch to '{recovery_task.title}' for a dopamine hit?",
+                "message": f"Dopamine Low? Switch to '{recovery_task.title}'. It's easier (Diff: {recovery_task.analysis.difficulty_score}) and might get you back in flow.",
                 "task_id": recovery_task.id,
             }
         )

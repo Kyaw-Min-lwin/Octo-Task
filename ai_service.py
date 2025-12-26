@@ -16,23 +16,22 @@ def analyze_task(task_description):
     prompt = f"""
     You are an expert ADHD Coach. 
     The user is feeling overwhelmed by this task: "{task_description}"
-    
-    Break this task down into 3-5 concrete, actionable sub-goals.
-    
-    RULES:
+    1. Break this task down into 3-5 concrete, actionable sub-goals (MVP first).
+    2. Estimate the "Cognitive Load" (Difficulty) on a scale of 1-10.
+       - 1 = Trivial (Buy milk)
+       - 10 = Herculean (Write a thesis in 2 hours)
+       RULES:
     1. Respect the user's intelligence. Do NOT include steps like "Open laptop", "Turn on screen", or "Type in search bar".
     2. Focus on "Cognitive Chunks" (logical units of work) rather than mechanical actions.
     3. The first step must be the "MVP" (Minimum Viable Progress) to get them started.
-    4. Keep steps concise and professional.
-    
-    Return ONLY a JSON object with this exact key:
+    Return ONLY a JSON object with these keys:
     - "breakdown": [list of strings]
-    
+    - "difficulty": integer (1-10)
     Example output format:
     {{
-        "breakdown": ["Open the laptop", "Create the folder", "Write just one sentence"]
+        "breakdown": ["Quickly skim the entire assignment prompt to understand the overall goal and key deliverables.", "Outline the high-level logic or main components required for the solution."],
+        "difficulty": 3
     }}
-    
     Do not use markdown. Just raw JSON.
     """
 

@@ -19,15 +19,15 @@
             <div class="sliders-container" id="sliders-area">
                 <div><label>Urgency <span id="val_urgency">5.0</span></label><input type="range" id="urgency" name="urgency" min="1"
                         max="10" step="0.1" value="5"></div>
-                <div><label>Fear <span id="val_fear">5.0</span></label><input type="range" id="fear" name="fear" min="1" max="10"
-                        step="0.1" value="5"></div>
+                <div><label>Fear <span id="val_fear">5.0</span></label><input type="range" id="fear" name="fear" min="1"
+                        max="10" step="0.1" value="5"></div>
                 <div><label>Interest <span id="val_interest">5.0</span></label><input type="range" id="interest" name="interest" min="1"
                         max="10" step="0.1" value="5"></div>
                 </div>
             <div class="score-display">Priority: <span id="final_score">--</span></div>
             <button type="submit" class="add-btn">INITIATE TASK</button>
-            </form>
-            </div>
+        </form>
+        </div>
 
     <ul class="task-list">
         {% for task in tasks %}
@@ -68,19 +68,29 @@
             <div class="subtasks">
                 {% for sub in task.subtasks %}
                 <div class="subtask-item">
-                    <input type="checkbox" onchange="toggleSubtask({{ sub.id }})" {% if sub.status=='completed' %}checked{% endif
-                        %}>
-            
+                    <input type="checkbox" onchange="toggleSubtask({{ sub.id }})" {% if sub.status=='completed' %}checked{% endif %}>
+
                     <span style="{% if sub.status == 'completed' %}text-decoration: line-through; color: #aaa;{% endif %}">
                         {{ sub.title }}
                     </span>
                 </div>
                 {% endfor %}
-                </div>
-                {% endif %}
-                </li>
+            </div>
+            {% endif %}
+            </li>
         {% endfor %}
     </ul>
+
+    <div id="octo-modal" class="modal-overlay" style="display: none;">
+        <div class="modal-content">
+            <h2 id="modal-title">Zone Check</h2>
+            <p id="modal-msg">You haven't clicked anything in a while.</p>
+            <div class="modal-actions">
+                <button class="btn btn-secondary" id="modal-cancel-btn" onclick="closeModal()">I'm Good</button>
+                <button class="btn btn-primary" id="modal-confirm-btn">Switch Task</button>
+            </div>
+        </div>
+    </div>
 
     <script src="{{url_for('static', filename='script.js')}}"></script>
 

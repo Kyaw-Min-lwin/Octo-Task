@@ -178,34 +178,81 @@ async function toggleSubtask(subId) {
    6. DISTRACTION DETECTOR
 ================================ */
 let idleTime = 0;
-const IDLE_LIMIT = 6; // 60 seconds for testing (set to 600 later)
+const IDLE_LIMIT = 6; // seconds for testing
 
-// Reset timer on any interaction
-function resetIdleTimer() {
-    idleTime = 0;
-}
+function resetIdleTimer() { idleTime = 0; }
 document.onmousemove = resetIdleTimer;
 document.onkeypress = resetIdleTimer;
 document.onclick = resetIdleTimer;
 
-// Check every second
+// Get modal from DOM
+function getModal() {
+    return document.getElementById('octo-modal');
+}
+
+// Show modal with dynamic title, message, and confirm button action
+function showModal(title, msg, onConfirmText, onConfirmAction) {
+    const modal = getModal();
+    if (!modal) return;
+
+    document.getElementById('modal-title').textContent = title;
+    document.getElementById('modal-msg').textContent = msg;
+
+    const confirmBtn = document.getElementById('modal-confirm-btn');
+    confirmBtn.textContent = onConfirmText;
+    confirmBtn.onclick = onConfirmAction;
+
+    document.getElementById('modal-cancel-btn').onclick = closeModal;
+
+    modal.style.display = 'flex';
+}
+
+function closeModal() {
+    const modal = getModal();
+    if (modal) modal.style.display = 'none';
+    resetIdleTimer();
+}
+
+// Idle check every second
 setInterval(() => {
-    // Only count up if a task is ACTIVE
-    if (document.querySelector('.task-card.active')) {
+    const activeCard = document.querySelector('.task-card.active');
+    if (activeCard) {
         idleTime++;
-
         if (idleTime >= IDLE_LIMIT) {
-            // Trigger the "Are you okay?" logic
-            // Ideally, show a custom Modal, for now, use a simple check
-            let stillWorking = confirm("🧠 Zone Check: You haven't clicked anything in a while. Are you stuck?");
-
-            if (stillWorking) {
-                resetIdleTimer();
-            } else {
-                // User admitted defeat. Trigger the switch.
-                const currentTaskId = document.querySelector('.task-card.active').id.replace('card-', '');
-                window.location.href = `/recommend_switch/${currentTaskId}`;
-            }
+            showModal(
+                "🧠 Zone Check",
+                "You haven't clicked anything in a while. Are you still focused on this task?",
+                "No, I'm Stuck",
+                () => {
+                    const currentId = activeCard.id.replace('card-', '');
+                    fetchRecommendation(currentId);
+                }
+            );
+            idleTime = 0;
         }
     }
 }, 1000);
+
+// Fetch recommendation and update modal
+async function fetchRecommendation(currentTaskId) {
+    document.getElementById('modal-msg').textContent = "Analyzing database for dopamine...";
+
+    try {
+        const res = await fetch(`/recommend_switch/${currentTaskId}`);
+        const data = await res.json();
+
+        if (data.found) {
+            showModal(
+                "Recommendation Found",
+                data.message,
+                "Let's Do It",
+                () => updateState(data.task_id, 'start')
+            );
+        } else {
+            showModal("No Tasks Found", "Maybe take a quick walk?", "Okay", closeModal);
+        }
+    } catch (e) {
+        console.error(e);
+        closeModal();
+    }
+}

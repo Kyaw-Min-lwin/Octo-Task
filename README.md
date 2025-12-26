@@ -8,7 +8,7 @@ Standard to-do lists fail because they don't account for **Cognitive Load** or *
 ## 🛠 Tech Stack
 - **Backend:** Python (Flask), SQLAlchemy
 - **Database:** PostgreSQL
-- **AI/ML:** Google Gemini 1.5 Flash (via API)
+- **AI/ML:** Google Gemini 2.5 Flash (via API)
 - **Frontend:** HTML/CSS (Jinja2 Templates)
 
 ## ✨ Features
