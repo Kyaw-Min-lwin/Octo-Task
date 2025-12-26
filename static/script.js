@@ -178,7 +178,7 @@ async function toggleSubtask(subId) {
    6. DISTRACTION DETECTOR
 ================================ */
 let idleTime = 0;
-const IDLE_LIMIT = 60; // 60 seconds for testing (set to 600 later)
+const IDLE_LIMIT = 6; // 60 seconds for testing (set to 600 later)
 
 // Reset timer on any interaction
 function resetIdleTimer() {
@@ -204,7 +204,7 @@ setInterval(() => {
             } else {
                 // User admitted defeat. Trigger the switch.
                 const currentTaskId = document.querySelector('.task-card.active').id.replace('card-', '');
-                window.location.href = `/recommend_switch_ui/${currentTaskId}`;
+                window.location.href = `/recommend_switch/${currentTaskId}`;
             }
         }
     }
