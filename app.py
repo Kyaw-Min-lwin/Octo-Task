@@ -31,11 +31,7 @@ def index():
             urgency, fear, interest = 5.0, 5.0, 5.0
 
         if task_title:
-            # 2. CALCULATE SCORE
-            impulsiveness = 1.5
-            final_score = calculate_tmt_score(urgency, fear, interest, impulsiveness)
-            priority_pressure = urgency * 2 + fear
-            priority_score = priority_pressure * 0.6 + final_score * 0.4
+            priority_score = compute_final_priority(urgency, fear, interest)
 
             # 3. CREATE USER (If needed)
             user = models.User.query.first()
@@ -59,20 +55,13 @@ def index():
             db.session.add(task)
             db.session.commit()
 
-            # 5. SAVE ANALYSIS
-            analysis = models.TaskAnalysis(
-                task_id=task.id,
-                urgency_score=urgency,
-                fear_score=fear,
-                interest_score=interest,
-                confidence=1.0,
-                model_version="MiniLM-L6-v2",
-            )
-            db.session.add(analysis)
-
-            # 6. GET SUBTASKS
+            # 5. GET SUBTASKS
             ai_data = analyze_task(task_title)
             breakdown_steps = ai_data.get("breakdown", [])
+            ai_difficulty = ai_data.get("difficulty", 0)
+
+            # 2. If AI returns 0 (unsure), fallback to the user's Fear score
+            final_difficulty = ai_difficulty if ai_difficulty > 0 else fear
 
             for index, step_text in enumerate(breakdown_steps):
                 subtask = models.Subtask(
@@ -84,6 +73,17 @@ def index():
                 )
                 db.session.add(subtask)
 
+            # 6. SAVE ANALYSIS
+            analysis = models.TaskAnalysis(
+                task_id=task.id,
+                urgency_score=urgency,
+                fear_score=fear,
+                interest_score=interest,
+                difficulty_score=final_difficulty,
+                confidence=1.0,
+                model_version="MiniLM-L6-v2",
+            )
+            db.session.add(analysis)
             db.session.commit()
 
         return redirect(url_for("index"))
@@ -106,19 +106,51 @@ def predict():
 @app.route("/api/calculate_score", methods=["POST"])
 def api_calculate_score():
     data = request.get_json()
-
-    # Get values, defaulting to 5.0
     u = float(data.get("urgency", 5))
     f = float(data.get("fear", 5))
     i = float(data.get("interest", 5))
 
-    # Use the EXACT same formula as the backend
-    impulsiveness = 1.5
-    score = calculate_tmt_score(u, f, i, impulsiveness)
-    priority_pressure = u * 2 + f
-    priority_score = priority_pressure * 0.6 + score * 0.4
+    # REFACTORED: Single line call
+    priority_score = compute_final_priority(u, f, i)
 
     return jsonify({"priority_score": priority_score})
+
+
+# --- HELPER FUNCTIONS ---
+
+
+def compute_final_priority(urgency, fear, interest):
+    """
+    Centralizes the priority score math.
+    Change the formula here, and it updates everywhere.
+    """
+    impulsiveness = 1.5
+    tmt_score = calculate_tmt_score(urgency, fear, interest, impulsiveness)
+
+    priority_pressure = urgency * 2 + fear
+    # Weight: 60% Pressure, 40% Procrastination (TMT)
+    final_priority = priority_pressure * 0.6 + tmt_score * 0.4
+    return final_priority
+
+
+def update_task_timer(task):
+    """Updates time_spent based on last_started_at."""
+    if task.status == "active" and task.last_started_at:
+        now_utc = datetime.now(timezone.utc)
+        start_time = task.last_started_at
+
+        # Ensure UTC consistency
+        if start_time.tzinfo is None:
+            start_time = start_time.replace(tzinfo=timezone.utc)
+
+        delta = (now_utc - start_time).total_seconds()
+
+        # Update time
+        current_time = task.time_spent or 0
+        task.time_spent = current_time + int(delta)
+
+        # Reset start time
+        task.last_started_at = None
 
 
 @app.route("/start_task/<int:task_id>", methods=["POST"])
@@ -131,19 +163,9 @@ def start_task(task_id):
     now_utc = datetime.now(timezone.utc)
 
     if active_task and active_task.id != task_id:
-        if active_task.last_started_at:
-            # Ensure last_started_at is treated as UTC
-            start_time = active_task.last_started_at
-            if start_time.tzinfo is None:
-                start_time = start_time.replace(tzinfo=timezone.utc)
-
-            delta = (now_utc - start_time).total_seconds()
-            # Safety: Treat None as 0
-            current_time = active_task.time_spent or 0
-            active_task.time_spent = current_time + int(delta)
+        update_task_timer(task_id)
 
         active_task.status = "paused"
-        active_task.last_started_at = None
 
     # 2. START THE NEW TASK
     task = models.Task.query.get_or_404(task_id)
@@ -157,20 +179,8 @@ def start_task(task_id):
 @app.route("/pause_task/<int:task_id>", methods=["POST"])
 def pause_task(task_id):
     task = models.Task.query.get_or_404(task_id)
-    now_utc = datetime.now(timezone.utc)
-
-    if task.status == "active" and task.last_started_at:
-        start_time = task.last_started_at
-        if start_time.tzinfo is None:
-            start_time = start_time.replace(tzinfo=timezone.utc)
-
-        delta = (now_utc - start_time).total_seconds()
-
-        current_time = task.time_spent or 0
-        task.time_spent = current_time + int(delta)
-
+    update_task_timer(task)
     task.status = "paused"
-    task.last_started_at = None
 
     db.session.commit()
     return jsonify({"success": True, "status": "paused", "time_spent": task.time_spent})
@@ -181,18 +191,8 @@ def complete_task(task_id):
     task = models.Task.query.get_or_404(task_id)
     now_utc = datetime.now(timezone.utc)
 
-    if task.status == "active" and task.last_started_at:
-        start_time = task.last_started_at
-        if start_time.tzinfo is None:
-            start_time = start_time.replace(tzinfo=timezone.utc)
-
-        delta = (now_utc - start_time).total_seconds()
-
-        current_time = task.time_spent or 0
-        task.time_spent = current_time + int(delta)
-
+    update_task_timer(task)
     task.status = "completed"
-    task.last_started_at = None
     task.completed_at = now_utc
 
     db.session.commit()

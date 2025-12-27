@@ -27,13 +27,13 @@
             <div class="score-display">Priority: <span id="final_score">--</span></div>
             <button type="submit" class="add-btn">INITIATE TASK</button>
         </form>
-        </div>
+    </div>
 
     <ul class="task-list">
         {% for task in tasks %}
-        <li class="task-card {{ task.status }}" id="card-{{ task.id }}" data-status="{{ task.status }}"
-            data-start="{% if task.last_started_at %}{{ task.last_started_at.isoformat() }}{% endif %}"
-            data-accumulated="{{ task.time_spent or 0 }}">
+        <li class="task-card {{ 'active' if task.status == 'active' else '' }}" id="card-{{ task.id }}"
+            data-status="{{ task.status }}" data-start="{{ task.last_started_at.isoformat() if task.last_started_at else '' }}"
+            data-accumulated="{{ task.time_spent }}">
             <div class="task-header">
                 <div>
                     <h3 class="task-title">{{ task.title }}</h3>
@@ -50,14 +50,15 @@
                 </div>
             </div>
 
-            <div class="controls">
+            <div class="controls card-actions">
                 {% if task.status == 'active' %}
-                <button class="btn btn-pause" onclick="updateState({{ task.id }}, 'pause')">⏸ Pause</button>
-                <button class="btn btn-done" onclick="updateState({{ task.id }}, 'complete')">✅ Complete</button>
+                <button class="btn btn-pause btn-warning action-btn" onclick="updateState({{ task.id }}, 'pause')">⏸ Pause</button>
+                <button class="btn btn-done btn-success action-btn" onclick="updateState({{ task.id }}, 'complete')">✅ Complete</button>
                 {% elif task.status != 'completed' %}
-                <button class="btn btn-start" onclick="updateState({{ task.id }}, 'start')">▶ Start Focus</button>
+                <button class="btn btn-start btn-primary action-btn" onclick="updateState({{ task.id }}, 'start')">▶ Start
+                    Focus</button>
                 {% if task.status == 'pending' or task.status == 'paused' %}
-                <button class="btn btn-done" onclick="updateState({{ task.id }}, 'complete')">Done</button>
+                <button class="btn btn-done btn-success action-btn" onclick="updateState({{ task.id }}, 'complete')">Done</button>
                 {% endif %}
                 {% else %}
                 <span>Completed on {{ task.completed_at.strftime('%Y-%m-%d') }}</span>
@@ -77,11 +78,11 @@
                 {% endfor %}
             </div>
             {% endif %}
-            </li>
+        </li>
         {% endfor %}
     </ul>
 
-    <div id="octo-modal" class="modal-overlay" style="display: none;">
+    <div id="octo-modal" class="modal-overlay">
         <div class="modal-content">
             <h2 id="modal-title">Zone Check</h2>
             <p id="modal-msg">You haven't clicked anything in a while.</p>

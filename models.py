@@ -66,16 +66,6 @@ class TaskAnalysis(db.Model):
 
     analyzed_at = db.Column(db.DateTime, default=datetime.now(timezone.utc))
 
-class TaskScore(db.Model):
-    __tablename__ = "task_scores"
-
-    id = db.Column(db.Integer, primary_key=True)
-    task_id = db.Column(db.Integer, db.ForeignKey("tasks.id"), nullable=False)
-
-    final_score = db.Column(db.Float, nullable=False)
-    formula_version = db.Column(db.String(50))
-
-    calculated_at = db.Column(db.DateTime, default=datetime.now(timezone.utc))
 
 class Subtask(db.Model):
     __tablename__ = "subtasks"
@@ -107,27 +97,3 @@ class TaskSession(db.Model):
     ended_at = db.Column(db.DateTime)
 
     active = db.Column(db.Boolean, default=True)
-
-class ProgressLog(db.Model):
-    __tablename__ = "progress_logs"
-
-    id = db.Column(db.Integer, primary_key=True)
-    task_id = db.Column(db.Integer, db.ForeignKey("tasks.id"), nullable=False)
-    subtask_id = db.Column(db.Integer, db.ForeignKey("subtasks.id"))
-
-    progress_type = db.Column(db.String(20))  # checkpoint / partial / completed
-    note = db.Column(db.Text)
-
-    created_at = db.Column(db.DateTime, default=datetime.now(timezone.utc))
-
-class Notification(db.Model):
-    __tablename__ = "notifications"
-
-    id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
-
-    type = db.Column(db.String(50))
-    message = db.Column(db.Text)
-    read = db.Column(db.Boolean, default=False)
-
-    created_at = db.Column(db.DateTime, default=datetime.now(timezone.utc))

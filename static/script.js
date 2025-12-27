@@ -10,6 +10,24 @@ const scoreDisplay = document.getElementById('final_score');
 const titleInput = document.getElementById('task_title');
 const slidersArea = document.getElementById('sliders-area');
 
+// Helper to update the slider positions and the text numbers
+function updateVisuals(u, f, i, score = null) {
+    // Update inputs
+    urgencySlider.value = u;
+    fearSlider.value = f;
+    interestSlider.value = i;
+
+    // Update text labels
+    document.getElementById('val_urgency').textContent = u.toFixed(1);
+    document.getElementById('val_fear').textContent = f.toFixed(1);
+    document.getElementById('val_interest').textContent = i.toFixed(1);
+
+    // Update score if provided
+    if (score !== null) {
+        scoreDisplay.textContent = score.toFixed(2);
+    }
+}
+
 // This function is ONLY used when you manually drag a slider
 async function updateScore() {
     const u = parseFloat(urgencySlider.value);
@@ -17,9 +35,7 @@ async function updateScore() {
     const i = parseFloat(interestSlider.value);
 
     // Update the numbers next to the sliders immediately
-    document.getElementById('val_urgency').textContent = u.toFixed(1);
-    document.getElementById('val_fear').textContent = f.toFixed(1);
-    document.getElementById('val_interest').textContent = i.toFixed(1);
+    updateVisuals(u, f, i);
 
     try {
         // ASK PYTHON FOR THE SCORE
@@ -69,22 +85,7 @@ titleInput.addEventListener('keyup', () => {
 
             const data = await res.json();
 
-            // 1. Update Slider Values (Visual Position)
-            urgencySlider.value = data.urgency;
-            fearSlider.value = data.fear;
-            interestSlider.value = data.interest;
-
-            // 2. Update Text Labels (Numbers next to sliders)
-            document.getElementById('val_urgency').textContent = data.urgency.toFixed(1);
-            document.getElementById('val_fear').textContent = data.fear.toFixed(1);
-            document.getElementById('val_interest').textContent = data.interest.toFixed(1);
-
-            // 3. Update Final Score DIRECTLY (No 2nd API Call)
-            if (data.priority_score !== undefined) {
-                scoreDisplay.textContent = data.priority_score.toFixed(2);
-            } else {
-                scoreDisplay.textContent = "Err";
-            }
+            updateVisuals(data.urgency, data.fear, data.interest, data.priority_score);
 
         } catch (e) {
             console.error('NLP error:', e);
@@ -93,24 +94,113 @@ titleInput.addEventListener('keyup', () => {
     }, 800);
 });
 
-
 /* ================================
-   3. TASK STATE MANAGEMENT
+   3. TASK STATE MANAGEMENT (Smooth DOM Update)
 ================================ */
 
 async function updateState(taskId, action) {
     const url = `/${action}_task/${taskId}`;
+    const card = document.getElementById(`card-${taskId}`);
+    const btn = card.querySelector('.action-btn'); // Assuming your button has this class
+
+    // Visual Feedback immediately (Optional: add a spinner or dim opactity)
+    if (btn) btn.disabled = true;
 
     try {
         const res = await fetch(url, { method: 'POST' });
         const data = await res.json();
 
         if (data.success) {
-            location.reload();
+            if (action === 'start') {
+                handleStartUI(card, taskId);
+            } else if (action === 'pause') {
+                handlePauseUI(card, data.time_spent);
+            } else if (action === 'complete') {
+                handleCompleteUI(card);
+            }
         }
     } catch (err) {
         console.error('State update error:', err);
+        alert("Something went wrong. Refreshing page...");
+        location.reload(); // Fallback
+    } finally {
+        if (btn) btn.disabled = false;
     }
+}
+
+// --- DOM HELPER FUNCTIONS ---
+
+function handleStartUI(targetCard, taskId) {
+    // 1. Deactivate any currently active card
+    const currentActive = document.querySelector('.task-card.active');
+    if (currentActive && currentActive !== targetCard) {
+        // We manually "pause" the UI of the old card
+        currentActive.classList.remove('active');
+        const oldBtn = currentActive.querySelector('button[onclick*="pause"]');
+        if (oldBtn) {
+            oldBtn.textContent = "▶ Start";
+            oldBtn.setAttribute('onclick', `updateState(${currentActive.id.replace('card-', '')}, 'start')`);
+            oldBtn.classList.remove('btn-warning');
+            oldBtn.classList.add('btn-primary'); // Adjust classes to match your CSS
+        }
+    }
+
+    // 2. Activate the new card
+    targetCard.classList.add('active');
+
+    // 3. Update the button on the new card
+    const btn = targetCard.querySelector('button[onclick*="start"]');
+    if (btn) {
+        btn.textContent = "⏸ Pause";
+        btn.setAttribute('onclick', `updateState(${taskId}, 'pause')`);
+        btn.classList.remove('btn-primary');
+        btn.classList.add('btn-warning');
+    }
+
+    // 4. Set timer data (Local time is close enough for display)
+    targetCard.setAttribute('data-start', new Date().toISOString());
+}
+
+function handlePauseUI(card, totalTimeSpent) {
+    // 1. Remove active state
+    card.classList.remove('active');
+
+    // 2. Update button back to Start
+    const btn = card.querySelector('button[onclick*="pause"]');
+    if (btn) {
+        btn.textContent = "▶ Resume"; // Or "Start"
+        // Extract ID from card ID string "card-123"
+        const id = card.id.replace('card-', '');
+        btn.setAttribute('onclick', `updateState(${id}, 'start')`);
+        btn.classList.remove('btn-warning');
+        btn.classList.add('btn-primary');
+    }
+
+    // 3. Update accumulated time so the timer doesn't jump when we restart
+    card.setAttribute('data-accumulated', totalTimeSpent);
+    card.removeAttribute('data-start');
+
+    // 4. Update the timer text immediately to show the final paused time
+    const timerDisplay = card.querySelector('.live-timer');
+    if (timerDisplay) {
+        // Helper to format seconds to MM:SS (Reusing logic if you have it, or simple inline)
+        const m = Math.floor(totalTimeSpent / 60);
+        const s = totalTimeSpent % 60;
+        timerDisplay.textContent = `${m}:${s.toString().padStart(2, '0')}m`;
+    }
+}
+
+function handleCompleteUI(card) {
+    // 1. Visual animation or style change
+    card.style.opacity = '0.5';
+    card.style.transform = 'scale(0.95)';
+
+    // 2. Remove actions
+    const actionsDiv = card.querySelector('.card-actions'); // Adjust selector based on your HTML
+    if (actionsDiv) actionsDiv.innerHTML = '<span class="text-success">✔ Done</span>';
+
+// 3. Move to bottom (Optional)
+// card.parentElement.appendChild(card); 
 }
 
 
