@@ -199,8 +199,8 @@ function handleCompleteUI(card) {
     const actionsDiv = card.querySelector('.card-actions'); // Adjust selector based on your HTML
     if (actionsDiv) actionsDiv.innerHTML = '<span class="text-success">✔ Done</span>';
 
-// 3. Move to bottom (Optional)
-// card.parentElement.appendChild(card); 
+    // 3. Move to bottom (Optional)
+    // card.parentElement.appendChild(card); 
 }
 
 
@@ -336,7 +336,28 @@ async function fetchRecommendation(currentTaskId) {
                 "Recommendation Found",
                 data.message,
                 "Let's Do It",
-                () => updateState(data.task_id, 'start')
+                () => {
+                    // 1. Update the state and close modal
+                    updateState(data.task_id, 'start');
+                    closeModal();
+
+                    // 2. Auto-scroll to the new task
+                    setTimeout(() => {
+                        const targetCard = document.getElementById(`card-${data.task_id}`);
+
+                        if (targetCard) {
+                            targetCard.scrollIntoView({
+                                behavior: 'smooth',
+                                block: 'center' // Puts the card in the middle of the screen
+                            });
+
+                            //  Add a temporary flash effect so the eye catches it
+                            targetCard.style.transition = "transform 0.3s";
+                            targetCard.style.transform = "scale(1.05)";
+                            setTimeout(() => targetCard.style.transform = "scale(1)", 300);
+                        }
+                    }, 200); // 200ms delay to ensure DOM is ready
+                }
             );
         } else {
             showModal("No Tasks Found", "Maybe take a quick walk?", "Okay", closeModal);

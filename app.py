@@ -217,31 +217,36 @@ def toggle_subtask(subtask_id):
 
 @app.route("/recommend_switch/<int:current_task_id>", methods=["GET"])
 def recommend_switch(current_task_id):
-    # Find a task that is EASIER (Lower Difficulty) and INTERESTING
-    recovery_task = (
-        models.Task.query.join(models.TaskAnalysis)
+    # Query for BOTH Task and TaskAnalysis
+    result = (
+        db.session.query(models.Task, models.TaskAnalysis)  # Select both
+        .join(models.TaskAnalysis, models.Task.id == models.TaskAnalysis.task_id)
         .filter(
             models.Task.id != current_task_id,
-            models.Task.status == "pending",
-            models.TaskAnalysis.difficulty_score < 6,  # Easy tasks only
+            models.Task.status.in_(["pending", "paused", "active"]),
+            models.TaskAnalysis.difficulty_score <= 6,
         )
-        .order_by(models.TaskAnalysis.interest_score.desc())  # Most interesting first
+        .order_by(models.TaskAnalysis.interest_score.desc())
         .first()
     )
 
-    if recovery_task:
+    if result:
+        # Unpack the tuple (Task, TaskAnalysis)
+        task, analysis = result
+
         return jsonify(
             {
                 "found": True,
-                "message": f"Dopamine Low? Switch to '{recovery_task.title}'. It's easier (Diff: {recovery_task.analysis.difficulty_score}) and might get you back in flow.",
-                "task_id": recovery_task.id,
+                # Now use 'task' for title and 'analysis' for score
+                "message": f"How about '{task.title}'? It's fairly easy (Diff: {analysis.difficulty_score}) and might help you reset.",
+                "task_id": task.id,
             }
         )
     else:
         return jsonify(
             {
                 "found": False,
-                "message": "No easy tasks found. Maybe take a 5-minute walk?",
+                "message": "No suitable tasks found. Time for a break?",
             }
         )
 
