@@ -40,6 +40,8 @@ def index():
                     email="default@example.com",
                     username="default",
                     password_hash="dummy",
+                    level=1,
+                    total_xp=0,
                 )
                 db.session.add(user)
                 db.session.commit()
@@ -89,7 +91,28 @@ def index():
         return redirect(url_for("index"))
 
     tasks = models.Task.query.order_by(models.Task.priority_score.desc()).all()
-    return render_template("index.html", tasks=tasks)
+    user = models.User.query.first()
+    tasks_data = []
+    for t in tasks:
+        tasks_data.append(
+            {
+                "id": t.id,
+                "title": t.title,
+                "priority": t.priority_score or 0,
+                "status": t.status,
+                "diff": t.analysis.difficulty_score if t.analysis else 5,
+                "subtasks": [
+                    {"id": s.id, "title": s.title, "status": s.status}
+                    for s in t.subtasks
+                ],
+                "start": t.last_started_at.isoformat() if t.last_started_at else None,
+                "accumulated": t.time_spent or 0,
+            }
+        )
+
+    # 2. Pass the single clean list to the template
+    print(tasks_data)
+    return render_template("temp.html", tasks=tasks, tasks_json=tasks_data, user=user)
 
 
 @app.route("/api/predict", methods=["POST"])
@@ -163,7 +186,7 @@ def start_task(task_id):
     now_utc = datetime.now(timezone.utc)
 
     if active_task and active_task.id != task_id:
-        update_task_timer(task_id)
+        update_task_timer(active_task)
 
         active_task.status = "paused"
 
@@ -186,17 +209,17 @@ def pause_task(task_id):
     return jsonify({"success": True, "status": "paused", "time_spent": task.time_spent})
 
 
-@app.route("/complete_task/<int:task_id>", methods=["POST"])
-def complete_task(task_id):
-    task = models.Task.query.get_or_404(task_id)
-    now_utc = datetime.now(timezone.utc)
+# @app.route("/complete_task/<int:task_id>", methods=["POST"])
+# def complete_task(task_id):
+#     task = models.Task.query.get_or_404(task_id)
+#     now_utc = datetime.now(timezone.utc)
 
-    update_task_timer(task)
-    task.status = "completed"
-    task.completed_at = now_utc
+#     update_task_timer(task)
+#     task.status = "completed"
+#     task.completed_at = now_utc
 
-    db.session.commit()
-    return jsonify({"success": True, "status": "completed"})
+#     db.session.commit()
+#     return jsonify({"success": True, "status": "completed"})
 
 
 @app.route("/toggle_subtask/<int:subtask_id>", methods=["POST"])
@@ -249,6 +272,85 @@ def recommend_switch(current_task_id):
                 "message": "No suitable tasks found. Time for a break?",
             }
         )
+
+
+# ... inside app.py ...
+
+
+@app.route("/complete_task/<int:task_id>", methods=["POST"])
+def complete_task(task_id):
+    task = models.Task.query.get_or_404(task_id)
+    user = models.User.query.get(task.user_id)  # Get the user
+    now_utc = datetime.now(timezone.utc)
+
+    # 1. Final Timer Update
+    update_task_timer(task)
+
+    # 2. Status Update
+    task.status = "completed"
+    task.completed_at = now_utc
+
+    # 3. --- NEW: CALCULATE XP ---
+    # Formula: 10 XP per minute of focus + Bonus for Priority
+    minutes_focused = (task.time_spent or 0) / 60
+    base_xp = minutes_focused * 10
+
+    # Priority Multiplier: Higher priority = More XP (Max 2x multiplier)
+    multiplier = 1 + (task.priority_score / 100)
+
+    xp_gained = int(base_xp * multiplier) + 50  # +50 flat bonus for finishing
+
+    # Save to User (Assuming you added total_xp to User model previously)
+    if not user.total_xp:
+        user.total_xp = 0
+    user.total_xp += xp_gained
+
+    # Save to Task for history
+    task.xp_earned = xp_gained
+
+    # Check for Level Up (Simple logic: Level = sqrt(XP)/10 or similar)
+    # For hackathon: Just strict thresholds
+    old_level = user.level or 1
+    new_level = int(1 + (user.total_xp / 1000))  # Level up every 1000 XP
+    leveled_up = new_level > old_level
+    user.level = new_level
+
+    db.session.commit()
+
+    return jsonify(
+        {
+            "success": True,
+            "status": "completed",
+            "xp_gained": xp_gained,
+            "total_xp": user.total_xp,
+            "leveled_up": leveled_up,
+            "new_level": new_level,
+        }
+    )
+
+
+# --- ADD THIS TO app.py ---
+
+
+@app.route("/focus/<int:task_id>")
+def focus_view(task_id):
+    task = models.Task.query.get_or_404(task_id)
+
+    # Serialize just this SINGLE task for the JavaScript
+    task_data = {
+        "id": task.id,
+        "title": task.title,
+        "priority": task.priority_score or 0,
+        "status": task.status,
+        "diff": task.analysis.difficulty_score if task.analysis else 5,
+        "subtasks": [
+            {"id": s.id, "title": s.title, "status": s.status} for s in task.subtasks
+        ],
+        "start": task.last_started_at.isoformat() if task.last_started_at else None,
+        "accumulated": task.time_spent or 0,
+    }
+
+    return render_template("focus.html", task_json=task_data)
 
 
 if __name__ == "__main__":

@@ -16,24 +16,21 @@ body {
     font-family: var(--font-body);
     margin: 0;
     height: 100vh;
-    overflow: hidden;
-    /* Prevent scrolling in map mode */
-    background-image:
+    overflow: hidden; /* Prevent scrolling in map mode */
+    background-image: 
         radial-gradient(circle at 50% 50%, #0d1b2a 0%, #000 100%);
 }
 
 /* --- 1. HEADER HUD --- */
 .hud-header {
     position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
+    top: 0; left: 0; width: 100%;
     padding: 20px;
     display: flex;
     justify-content: space-between;
     box-sizing: border-box;
     z-index: 100;
-    pointer-events: none;
+    pointer-events: none; 
 }
 
 .brand {
@@ -42,10 +39,7 @@ body {
     font-size: 1.2rem;
     letter-spacing: 2px;
 }
-
-.blink {
-    animation: blink 2s infinite;
-}
+.blink { animation: blink 2s infinite; }
 
 .user-stats {
     display: flex;
@@ -57,22 +51,9 @@ body {
     pointer-events: auto;
 }
 
-.stat-box {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-}
-
-.stat-box .label {
-    font-size: 0.6rem;
-    color: #888;
-}
-
-.stat-box .value {
-    font-family: var(--font-head);
-    font-size: 1.1rem;
-    color: var(--neon-purple);
-}
+.stat-box { display: flex; flex-direction: column; align-items: center; }
+.stat-box .label { font-size: 0.6rem; color: #888; }
+.stat-box .value { font-family: var(--font-head); font-size: 1.1rem; color: var(--neon-purple); }
 
 /* --- 2. MAP VIEW (RADIAL) --- */
 .map-container {
@@ -89,7 +70,7 @@ body {
 .octopus-center {
     width: 140px;
     height: 140px;
-    background: rgba(0, 0, 0, 0.8);
+    background: rgba(0,0,0,0.8);
     border: 2px solid var(--neon-blue);
     border-radius: 50%;
     display: flex;
@@ -109,26 +90,13 @@ body {
     color: #000;
 }
 
-.head-content {
-    text-align: center;
-}
-
-.head-content .icon {
-    display: block;
-    font-size: 2rem;
-}
-
-.head-content .text {
-    font-family: var(--font-head);
-    font-size: 0.7rem;
-    font-weight: bold;
-    letter-spacing: 1px;
-}
+.head-content { text-align: center; }
+.head-content .icon { display: block; font-size: 2rem; }
+.head-content .text { font-family: var(--font-head); font-size: 0.7rem; font-weight: bold; letter-spacing: 1px; }
 
 .pulse-ring {
     position: absolute;
-    width: 100%;
-    height: 100%;
+    width: 100%; height: 100%;
     border-radius: 50%;
     border: 1px solid var(--neon-blue);
     animation: pulse-ring 2s infinite;
@@ -149,11 +117,9 @@ body {
     position: absolute;
     width: 120px;
     height: 120px;
-    left: 50%;
-    top: 50%;
-    margin-left: -60px;
-    margin-top: -60px;
-
+    left: 50%; top: 50%;
+    margin-left: -60px; margin-top: -60px;
+    
     background: var(--hud-bg);
     border: var(--glass-border);
     border-radius: 10px;
@@ -167,7 +133,7 @@ body {
     cursor: pointer;
     transition: all 0.3s;
     font-size: 0.8rem;
-    overflow: hidden;
+    overflow: hidden; 
 }
 
 .task-node:hover {
@@ -176,19 +142,12 @@ body {
     z-index: 20;
 }
 
-.task-node.priority-high {
-    border-color: var(--neon-red);
-}
-
-.task-node.active-node {
-    border-color: var(--neon-green);
-    background: rgba(10, 255, 104, 0.1);
-}
-
-.task-node.completed {
-    opacity: 0.5;
-    text-decoration: line-through;
-    border-color: #555;
+.task-node.priority-high { border-color: var(--neon-red); }
+.task-node.active-node { border-color: var(--neon-green); background: rgba(10,255,104, 0.1); }
+.task-node.completed { 
+    opacity: 0.5; 
+    text-decoration: line-through; 
+    border-color: #555; 
 }
 
 /* --- 3. MISSION CONTROL (FORM) --- */
@@ -207,53 +166,23 @@ body {
 
 .mission-control-panel input[type="text"] {
     width: 100%;
-    background: rgba(0, 0, 0, 0.5);
+    background: rgba(0,0,0,0.5);
     border: 1px solid #333;
     color: var(--neon-blue);
     padding: 10px;
     font-family: var(--font-head);
     margin-bottom: 10px;
-    box-sizing: border-box;
+    box-sizing: border-box; 
 }
 
-.hud-sliders {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-    margin-bottom: 10px;
-    opacity: 0.5;
-    transition: opacity 0.3s;
-}
+.hud-sliders { display: flex; flex-direction: column; gap: 8px; margin-bottom: 10px; opacity: 0.5; transition: opacity 0.3s;}
+.mission-control-panel:hover .hud-sliders { opacity: 1; }
 
-.mission-control-panel:hover .hud-sliders {
-    opacity: 1;
-}
+.slider-group { display: flex; justify-content: space-between; font-size: 0.7rem; color: #aaa; align-items: center;}
+input[type="range"] { width: 60%; accent-color: var(--neon-blue); }
 
-.slider-group {
-    display: flex;
-    justify-content: space-between;
-    font-size: 0.7rem;
-    color: #aaa;
-    align-items: center;
-}
-
-input[type="range"] {
-    width: 60%;
-    accent-color: var(--neon-blue);
-}
-
-.hud-footer {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
-
-.priority-readout {
-    font-family: var(--font-head);
-    font-size: 0.8rem;
-    color: var(--neon-red);
-}
-
+.hud-footer { display: flex; justify-content: space-between; align-items: center; }
+.priority-readout { font-family: var(--font-head); font-size: 0.8rem; color: var(--neon-red); }
 .btn-hud {
     background: var(--neon-blue);
     color: #000;
@@ -278,49 +207,24 @@ input[type="range"] {
     font-size: 0.8rem;
     z-index: 50;
 }
-
-.reserve-tank h3 {
-    margin: 0 0 10px 0;
-    font-family: var(--font-head);
-    font-size: 0.8rem;
-    color: #888;
-}
-
-.reserve-tank ul {
-    list-style: none;
-    padding: 0;
-    margin: 0;
-}
-
-.reserve-tank li {
-    padding: 5px;
-    border-bottom: 1px solid #333;
-    color: #aaa;
-    display: flex;
-    justify-content: space-between;
-}
+.reserve-tank h3 { margin: 0 0 10px 0; font-family: var(--font-head); font-size: 0.8rem; color: #888; }
+.reserve-tank ul { list-style: none; padding: 0; margin: 0; }
+.reserve-tank li { padding: 5px; border-bottom: 1px solid #333; color: #aaa; display: flex; justify-content: space-between; }
 
 /* --- 5. DEEP DIVE (FOCUS MODE) --- */
 .deep-dive-overlay {
     position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
+    top: 0; left: 0; width: 100%; height: 100%;
     background: radial-gradient(circle, #001 0%, #000 100%);
     z-index: 200;
     display: none;
     flex-direction: column;
-    justify-content: start;
-    /* Align top-down */
+    justify-content: start; /* Align top-down */
     align-items: center;
     padding-top: 5vh;
 }
 
-.deep-dive-overlay.visible {
-    display: flex;
-    animation: fade-in 0.5s;
-}
+.deep-dive-overlay.visible { display: flex; animation: fade-in 0.5s; }
 
 /* The Center Stage (Title & Timer) */
 .stage-center {
@@ -362,34 +266,20 @@ input[type="range"] {
     cursor: pointer;
     transition: all 0.2s;
 }
-
-.btn-focus:hover {
-    background: #fff;
-    color: #000;
-    box-shadow: 0 0 20px #fff;
-}
-
-.btn-complete {
-    border-color: var(--neon-green);
-    color: var(--neon-green);
-}
-
-.btn-complete:hover {
-    background: var(--neon-green);
-    color: #000;
-}
+.btn-focus:hover { background: #fff; color: #000; box-shadow: 0 0 20px #fff; }
+.btn-complete { border-color: var(--neon-green); color: var(--neon-green); }
+.btn-complete:hover { background: var(--neon-green); color: #000; }
 
 .btn-eject {
     position: absolute;
-    top: 20px;
-    right: 20px;
+    top: 20px; right: 20px;
     background: transparent;
     border: 1px solid var(--neon-red);
     color: var(--neon-red);
     padding: 10px 20px;
     font-family: var(--font-head);
     cursor: pointer;
-    z-index: 200;
+    z-index: 200; 
 }
 
 /* --- NEW: TACTICAL CHECKLIST (Replaces Bubbles) --- */
@@ -403,26 +293,19 @@ input[type="range"] {
     flex-direction: column;
     gap: 12px;
     padding: 10px;
-
+    
     /* Scrollbar Styling */
     scrollbar-width: thin;
-    scrollbar-color: var(--neon-blue) rgba(0, 0, 0, 0.5);
+    scrollbar-color: var(--neon-blue) rgba(0,0,0,0.5);
 }
 
-.checklist-layer::-webkit-scrollbar {
-    width: 6px;
-}
-
-.checklist-layer::-webkit-scrollbar-thumb {
-    background: var(--neon-blue);
-    border-radius: 3px;
-}
+.checklist-layer::-webkit-scrollbar { width: 6px; }
+.checklist-layer::-webkit-scrollbar-thumb { background: var(--neon-blue); border-radius: 3px; }
 
 .task-row {
     background: rgba(10, 20, 30, 0.85);
     border: 1px solid rgba(0, 243, 255, 0.3);
-    border-left: 4px solid var(--neon-blue);
-    /* Status Bar */
+    border-left: 4px solid var(--neon-blue); /* Status Bar */
     padding: 15px 20px;
     display: flex;
     align-items: center;
@@ -431,7 +314,7 @@ input[type="range"] {
     transition: all 0.2s;
     font-family: var(--font-body);
     font-size: 1rem;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+    box-shadow: 0 4px 6px rgba(0,0,0,0.3);
     border-radius: 0 4px 4px 0;
 }
 
@@ -456,14 +339,10 @@ input[type="range"] {
     cursor: default;
 }
 
-.task-row-content {
-    flex-grow: 1;
-    margin-right: 15px;
-}
+.task-row-content { flex-grow: 1; margin-right: 15px; }
 
 .check-indicator {
-    width: 24px;
-    height: 24px;
+    width: 24px; height: 24px;
     border: 2px solid var(--neon-blue);
     border-radius: 50%;
     display: flex;
@@ -479,7 +358,6 @@ input[type="range"] {
     border-color: var(--neon-green);
     box-shadow: 0 0 10px var(--neon-green);
 }
-
 .task-row.completed .check-indicator::after {
     content: '✓';
     font-weight: bold;
@@ -487,18 +365,14 @@ input[type="range"] {
 
 /* MODAL Override */
 .modal-overlay {
-    background: rgba(0, 0, 0, 0.9);
-    display: none;
+    background: rgba(0,0,0,0.9);
+    display: none; 
     justify-content: center;
     align-items: center;
     position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    z-index: 1000;
+    top: 0; left: 0; width: 100%; height: 100%;
+    z-index: 1000; 
 }
-
 .modal-content {
     background: #050a10;
     border: 1px solid var(--neon-purple);
@@ -508,52 +382,14 @@ input[type="range"] {
     text-align: center;
     max-width: 400px;
 }
-
 .modal-actions {
     margin-top: 20px;
     display: flex;
     justify-content: space-around;
 }
-
-.modal-actions button {
-    margin: 0 5px;
-}
+.modal-actions button { margin: 0 5px; }
 
 /* Animations */
-@keyframes blink {
-    0%, 100% {
-        opacity: 1;
-    }
-
-    50% {
-        opacity: 0;
-    }
-}
-
-@keyframes pulse-ring {
-    0% {
-        transform: scale(0.8);
-        opacity: 0;
-    }
-
-    50% {
-        opacity: 1;
-    }
-
-    100% {
-        transform: scale(1.5);
-        opacity: 0;
-    }
-}
-
-@keyframes fade-in {
-    from {
-        opacity: 0;
-        transform: scale(0.9);
-    }
-
-    to {
-        opacity: 1;
-        transform: scale(1);
-    }
-}
+@keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
+@keyframes pulse-ring { 0% { transform: scale(0.8); opacity: 0; } 50% { opacity: 1; } 100% { transform: scale(1.5); opacity: 0; } }
+@keyframes fade-in { from { opacity: 0; transform: scale(0.9); } to { opacity: 1; transform: scale(1); } }

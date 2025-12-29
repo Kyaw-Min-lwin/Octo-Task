@@ -1,6 +1,7 @@
 from datetime import datetime, timezone
 from extensions import db
 
+
 class User(db.Model):
     __tablename__ = "users"
 
@@ -8,6 +9,10 @@ class User(db.Model):
     email = db.Column(db.String(120), unique=True, nullable=False)
     username = db.Column(db.String(80), unique=True, nullable=False)
     password_hash = db.Column(db.String(256), nullable=False)
+
+    # --- ADDED GAMIFICATION FIELDS ---
+    level = db.Column(db.Integer, default=1)
+    total_xp = db.Column(db.Integer, default=0)
 
     created_at = db.Column(db.DateTime, default=datetime.now(timezone.utc))
 
@@ -23,19 +28,18 @@ class Task(db.Model):
     title = db.Column(db.String(200), nullable=False)
     description = db.Column(db.Text)
 
-    # --- UPDATED / NEW FIELDS ---
     status = db.Column(
         db.String(20), default="pending"
     )  # pending, active, paused, completed
-    priority_score = db.Column(db.Float)
+    priority_score = db.Column(db.Float)  # Kept only this one
 
-    # New Time Tracking Fields
+    # Time Tracking
     time_spent = db.Column(db.Integer, default=0)  # Total seconds focused
-    last_started_at = db.Column(
-        db.DateTime, nullable=True
-    )  # For calculating session delta
+    last_started_at = db.Column(db.DateTime, nullable=True)
 
-    priority_score = db.Column(db.Float)
+    # --- ADDED XP HISTORY FIELD ---
+    xp_earned = db.Column(db.Integer, default=0)
+
     current_order = db.Column(db.Integer)
 
     created_at = db.Column(db.DateTime, default=datetime.now(timezone.utc))
@@ -47,6 +51,10 @@ class Task(db.Model):
     completed_at = db.Column(db.DateTime)
 
     subtasks = db.relationship("Subtask", backref="task", lazy=True)
+
+    # --- ADDED RELATIONSHIP FOR TASK ANALYSIS ---
+    # This allows `task.analysis.difficulty_score` to work
+    analysis = db.relationship("TaskAnalysis", backref="task", uselist=False, lazy=True)
 
 
 class TaskAnalysis(db.Model):

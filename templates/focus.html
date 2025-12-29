@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Deep Dive // Focus</title>
+    <!-- Ensure this matches your actual CSS filename -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Roboto:wght@300;400;700&display=swap"
+        rel="stylesheet">
+
+    <script>
+        // Instead of a list of tasks, we get ONE task
+        const CURRENT_TASK = {{ task_json | tojson | safe }};
+    </script>
+</head>
+
+<body class="focus-mode">
+
+    <div id="view-focus" class="deep-dive-overlay visible" style="display: flex;">
+
+        <button class="btn-eject" onclick="exitDeepDive()">EJECT</button>
+
+        <!-- Main Center Stage: Title & Timer -->
+        <div id="active-task-stage" class="stage-center">
+            <h1 id="focus-title">LOADING...</h1>
+            <div class="focus-timer" id="focus-timer">00:00</div>
+
+            <div class="focus-controls">
+                <button class="btn-focus btn-pause" id="focus-toggle-btn" onclick="toggleFocusState()">PAUSE</button>
+                <button class="btn-focus btn-complete" onclick="completeCurrentTask()">MISSION COMPLETE</button>
+            </div>
+        </div>
+
+        <!-- NEW: Tactical Checklist (Replaces Bubbles) -->
+        <div id="checklist-container" class="checklist-layer">
+            <!-- List items injected here by temp.js -->
+        </div>
+    </div>
+
+    <!-- Modal for Alerts/Confirmations -->
+    <div id="octo-modal" class="modal-overlay">
+        <div class="modal-content">
+            <h2 id="modal-title">ALERT</h2>
+            <p id="modal-msg">...</p>
+            <div class="modal-actions">
+                <button class="btn-hud secondary" id="modal-cancel-btn">CANCEL</button>
+                <button class="btn-hud primary" id="modal-confirm-btn">CONFIRM</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="{{url_for('static', filename='script.js')}}"></script>
+</body>
+
+</html>

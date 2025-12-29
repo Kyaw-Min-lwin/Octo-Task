@@ -109,7 +109,7 @@ function enterDeepDive() {
     // 2. If no active task, find highest priority PENDING or PAUSED task
     // FIX: Added check for 'paused' so they aren't ignored
     const candidates = SERVER_TASKS.filter(t => t.status === 'pending' || t.status === 'paused');
-
+    
     // Sort by priority (Highest first)
     candidates.sort((a, b) => b.priority - a.priority);
 
@@ -209,7 +209,7 @@ function initSliders() {
                     inputs.fear.value = data.fear;
                     inputs.interest.value = data.interest;
 
-                // Update visuals and score with the prediction data
+                    // Update visuals and score with the prediction data
                     updateVisuals(data.urgency, data.fear, data.interest, data.priority_score);
                 }
 
@@ -239,7 +239,7 @@ function initFocusMode() {
         const total = CURRENT_TASK.accumulated || 0;
         const m = Math.floor(total / 60).toString().padStart(2, '0');
         const s = (total % 60).toString().padStart(2, '0');
-
+        
         const display = document.getElementById('focus-timer');
         if (display) {
             display.textContent = `${m}:${s}`;
