@@ -409,6 +409,8 @@ def focus_view(task_id):
 
     return render_template("focus.html", task_json=task_data)
 
-
+# Add this temporarily to create tables on the first run
+with app.app_context():
+    db.create_all()
 if __name__ == "__main__":
     app.run(debug=True)
