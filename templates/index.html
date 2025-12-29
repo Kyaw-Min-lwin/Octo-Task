@@ -16,21 +16,28 @@
     <!-- 1. HEADER (EGO STATS) -->
     <div class="hud-header">
         <div class="brand">OCTO COMMAND <span class="blink">_ONLINE</span></div>
-        <div class="user-stats">
-            <div class="stat-box">
-                <span class="label">LEVEL</span>
-                <span class="value">{{ user.level }}</span>
+        <div class="hud-right-panel">
+            <div class="user-stats">
+                <div class="stat-box">
+                    <span class="label">OPERATOR</span>
+                    <span class="value" style="color: var(--neon-blue);">{{ user.username }}</span>
+                    </div>
+                    <div class="stat-box">
+                    <span class="label">LEVEL</span>
+                    <span class="value">{{ user.level }}</span>
+                    </div>
+                    <div class="stat-box">
+                        <span class="label">XP</span>
+                        <span class="value">{{ user.total_xp }}</span>
+                    </div>
             </div>
-            <div class="stat-box">
-                <span class="label">XP</span>
-                <span class="value">{{ user.total_xp }}</span>
-            </div>
+            <a href="{{ url_for('logout') }}" class="btn-hud btn-logout">DISCONNECT</a>
         </div>
     </div>
 
     <!-- 2. VIEW A: THE CAPTAIN'S MAP -->
     <div id="view-map" class="map-container">
-    
+
         <!-- The Octopus Head (Start Button) -->
         <div class="octopus-center" onclick="enterDeepDive()">
             <div class="pulse-ring"></div>
@@ -48,7 +55,7 @@
         <div class="mission-control-panel">
             <form method="POST" action="/">
                 <input type="text" id="task_title" name="task_title" placeholder="ADD NEW DIRECTIVE..." autocomplete="off">
-        
+
                 <!-- Compact Sliders -->
                 <div class="hud-sliders" id="sliders-area">
                     <div class="slider-group">
@@ -69,7 +76,7 @@
                     <button type="submit" class="btn-hud">UPLOAD</button>
                 </div>
             </form>
-            </div>
+        </div>
 
         <!-- Reserve Tank (Overflow) -->
         <div class="reserve-tank">

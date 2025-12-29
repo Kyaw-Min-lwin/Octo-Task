@@ -1,15 +1,26 @@
-from flask import Flask, render_template, request, redirect, url_for, jsonify
+from flask import (
+    Flask,
+    render_template,
+    request,
+    redirect,
+    url_for,
+    jsonify,
+    session,
+    flash,
+)
 from extensions import db
 from flask_migrate import Migrate
 import models
 from config import SQLALCHEMY_DATABASE_URI, SQLALCHEMY_TRACK_MODIFICATIONS
 from datetime import datetime, timezone  # <--- CHANGED: Added timezone
+import os
 
 # this for the subtask generation
 from ai_service import analyze_task
 from services.scoring_service import predict_task_metrics, calculate_tmt_score
 
 app = Flask(__name__)
+app.secret_key = os.getenv("SECRET_KEY", "octo_command_secret_key_999")
 app.config["SQLALCHEMY_DATABASE_URI"] = SQLALCHEMY_DATABASE_URI
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = SQLALCHEMY_TRACK_MODIFICATIONS
 
@@ -17,8 +28,69 @@ db.init_app(app)
 migrate = Migrate(app, db)
 
 
+# --- AUTH ROUTES ---
+
+
+@app.route("/register", methods=["GET", "POST"])
+def register():
+    if request.method == "POST":
+        username = request.form.get("username").strip()
+        password = request.form.get("password").strip()
+
+        if not username or not password:
+            flash("CREDENTIALS MISSING", "error")
+            return redirect(url_for("register"))
+
+        if models.User.query.filter_by(username=username).first():
+            flash("CALL SIGN ALREADY TAKEN", "error")
+            return redirect(url_for("register"))
+
+        # Create Secure User
+        new_user = models.User(username=username)
+        new_user.set_password(password)
+
+        db.session.add(new_user)
+        db.session.commit()
+
+        # Auto-login after register
+        session["user_id"] = new_user.id
+        return redirect(url_for("index"))
+
+    return render_template("register.html")
+
+
+@app.route("/login", methods=["GET", "POST"])
+def login():
+    if request.method == "POST":
+        username = request.form.get("username").strip()
+        password = request.form.get("password").strip()
+
+        user = models.User.query.filter_by(username=username).first()
+
+        if user and user.check_password(password):
+            session["user_id"] = user.id
+            return redirect(url_for("index"))
+        else:
+            flash("INVALID CREDENTIALS", "error")
+
+    return render_template("login.html")
+
+
+@app.route("/logout")
+def logout():
+    session.pop("user_id", None)
+    return redirect(url_for("login"))
+
+
 @app.route("/", methods=["POST", "GET"])
 def index():
+    if "user_id" not in session:
+        return redirect(url_for("login"))
+
+    user = models.User.query.get(session["user_id"])
+    if not user:
+        session.pop("user_id", None)
+        return redirect(url_for("login"))
     if request.method == "POST":
         task_title = request.form.get("task_title")
 
@@ -33,26 +105,13 @@ def index():
         if task_title:
             priority_score = compute_final_priority(urgency, fear, interest)
 
-            # 3. CREATE USER (If needed)
-            user = models.User.query.first()
-            if not user:
-                user = models.User(
-                    email="default@example.com",
-                    username="default",
-                    password_hash="dummy",
-                    level=1,
-                    total_xp=0,
-                )
-                db.session.add(user)
-                db.session.commit()
-
             # 4. SAVE TASK
             task = models.Task(
                 user_id=user.id,
                 title=task_title,
                 priority_score=priority_score,
                 status="pending",
-                time_spent=0,  # Ensure it starts at 0, not None
+                time_spent=0,
             )
             db.session.add(task)
             db.session.commit()
@@ -90,8 +149,12 @@ def index():
 
         return redirect(url_for("index"))
 
-    tasks = models.Task.query.order_by(models.Task.priority_score.desc()).all()
-    user = models.User.query.first()
+    #  GET Tasks (Filtered by User)
+    tasks = (
+        models.Task.query.filter_by(user_id=user.id)
+        .order_by(models.Task.priority_score.desc())
+        .all()
+    )
     tasks_data = []
     for t in tasks:
         tasks_data.append(
@@ -111,12 +174,13 @@ def index():
         )
 
     # 2. Pass the single clean list to the template
-    print(tasks_data)
-    return render_template("temp.html", tasks=tasks, tasks_json=tasks_data, user=user)
+    return render_template("index.html", tasks=tasks, tasks_json=tasks_data, user=user)
 
 
 @app.route("/api/predict", methods=["POST"])
 def predict():
+    if "user_id" not in session:
+        return redirect(url_for("login"))
     data = request.get_json()
     text = data.get("title", "")
     if not text:
@@ -128,6 +192,8 @@ def predict():
 
 @app.route("/api/calculate_score", methods=["POST"])
 def api_calculate_score():
+    if "user_id" not in session:
+        return redirect(url_for("login"))
     data = request.get_json()
     u = float(data.get("urgency", 5))
     f = float(data.get("fear", 5))
@@ -178,8 +244,10 @@ def update_task_timer(task):
 
 @app.route("/start_task/<int:task_id>", methods=["POST"])
 def start_task(task_id):
+    if "user_id" not in session:
+        return redirect(url_for("login"))
     # 1. STOP EVERYTHING ELSE
-    user_id = 1
+    user_id = session["user_id"]
     active_task = models.Task.query.filter_by(status="active", user_id=user_id).first()
 
     # Current UTC time (Aware)
@@ -201,80 +269,14 @@ def start_task(task_id):
 
 @app.route("/pause_task/<int:task_id>", methods=["POST"])
 def pause_task(task_id):
+    if "user_id" not in session:
+        return redirect(url_for("login"))
     task = models.Task.query.get_or_404(task_id)
     update_task_timer(task)
     task.status = "paused"
 
     db.session.commit()
     return jsonify({"success": True, "status": "paused", "time_spent": task.time_spent})
-
-
-# @app.route("/complete_task/<int:task_id>", methods=["POST"])
-# def complete_task(task_id):
-#     task = models.Task.query.get_or_404(task_id)
-#     now_utc = datetime.now(timezone.utc)
-
-#     update_task_timer(task)
-#     task.status = "completed"
-#     task.completed_at = now_utc
-
-#     db.session.commit()
-#     return jsonify({"success": True, "status": "completed"})
-
-
-@app.route("/toggle_subtask/<int:subtask_id>", methods=["POST"])
-def toggle_subtask(subtask_id):
-    sub = models.Subtask.query.get_or_404(subtask_id)
-
-    # Toggle status
-    if sub.status == "completed":
-        sub.status = "pending"
-        sub.completed_at = None
-    else:
-        sub.status = "completed"
-        sub.completed_at = datetime.now(timezone.utc)
-
-    db.session.commit()
-    return jsonify({"success": True, "status": sub.status})
-
-
-@app.route("/recommend_switch/<int:current_task_id>", methods=["GET"])
-def recommend_switch(current_task_id):
-    # Query for BOTH Task and TaskAnalysis
-    result = (
-        db.session.query(models.Task, models.TaskAnalysis)  # Select both
-        .join(models.TaskAnalysis, models.Task.id == models.TaskAnalysis.task_id)
-        .filter(
-            models.Task.id != current_task_id,
-            models.Task.status.in_(["pending", "paused", "active"]),
-            models.TaskAnalysis.difficulty_score <= 6,
-        )
-        .order_by(models.TaskAnalysis.interest_score.desc())
-        .first()
-    )
-
-    if result:
-        # Unpack the tuple (Task, TaskAnalysis)
-        task, analysis = result
-
-        return jsonify(
-            {
-                "found": True,
-                # Now use 'task' for title and 'analysis' for score
-                "message": f"How about '{task.title}'? It's fairly easy (Diff: {analysis.difficulty_score}) and might help you reset.",
-                "task_id": task.id,
-            }
-        )
-    else:
-        return jsonify(
-            {
-                "found": False,
-                "message": "No suitable tasks found. Time for a break?",
-            }
-        )
-
-
-# ... inside app.py ...
 
 
 @app.route("/complete_task/<int:task_id>", methods=["POST"])
@@ -329,11 +331,66 @@ def complete_task(task_id):
     )
 
 
-# --- ADD THIS TO app.py ---
+@app.route("/toggle_subtask/<int:subtask_id>", methods=["POST"])
+def toggle_subtask(subtask_id):
+    if "user_id" not in session:
+        return redirect(url_for("login"))
+    sub = models.Subtask.query.get_or_404(subtask_id)
+
+    # Toggle status
+    if sub.status == "completed":
+        sub.status = "pending"
+        sub.completed_at = None
+    else:
+        sub.status = "completed"
+        sub.completed_at = datetime.now(timezone.utc)
+
+    db.session.commit()
+    return jsonify({"success": True, "status": sub.status})
+
+
+@app.route("/recommend_switch/<int:current_task_id>", methods=["GET"])
+def recommend_switch(current_task_id):
+    if "user_id" not in session:
+        return redirect(url_for("login"))
+    # Query for BOTH Task and TaskAnalysis
+    result = (
+        db.session.query(models.Task, models.TaskAnalysis)  # Select both
+        .join(models.TaskAnalysis, models.Task.id == models.TaskAnalysis.task_id)
+        .filter(
+            models.Task.id != current_task_id,
+            models.Task.status.in_(["pending", "paused", "active"]),
+            models.TaskAnalysis.difficulty_score <= 6,
+        )
+        .order_by(models.TaskAnalysis.interest_score.desc())
+        .first()
+    )
+
+    if result:
+        # Unpack the tuple (Task, TaskAnalysis)
+        task, analysis = result
+
+        return jsonify(
+            {
+                "found": True,
+                # Now use 'task' for title and 'analysis' for score
+                "message": f"How about '{task.title}'? It's fairly easy (Diff: {analysis.difficulty_score}) and might help you reset.",
+                "task_id": task.id,
+            }
+        )
+    else:
+        return jsonify(
+            {
+                "found": False,
+                "message": "No suitable tasks found. Time for a break?",
+            }
+        )
 
 
 @app.route("/focus/<int:task_id>")
 def focus_view(task_id):
+    if "user_id" not in session:
+        return redirect(url_for("login"))
     task = models.Task.query.get_or_404(task_id)
 
     # Serialize just this SINGLE task for the JavaScript

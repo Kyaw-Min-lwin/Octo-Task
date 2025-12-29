@@ -36,6 +36,42 @@ body {
     pointer-events: none;
 }
 
+/* Wrapper to align Stats and Logout button side-by-side */
+.hud-right-panel {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    /* Space between stats and button */
+    pointer-events: auto;
+    /* Re-enable clicking */
+}
+
+/* Specific styles for the Logout button */
+.btn-logout {
+    text-decoration: none;
+    /* Remove underline from <a> tag */
+    background: transparent;
+    /* Transparent background */
+    border: 1px solid var(--neon-red);
+    /* Red border */
+    color: var(--neon-red);
+    /* Red text */
+    padding: 8px 15px;
+    /* Slightly taller for easy clicking */
+    transition: all 0.3s ease;
+    font-size: 0.8rem;
+    letter-spacing: 1px;
+}
+
+.btn-logout:hover {
+    background: var(--neon-red);
+    color: #000;
+    /* Black text on red background */
+    box-shadow: 0 0 15px var(--neon-red);
+    /* Glowing effect */
+    transform: scale(1.05);
+}
+
 .brand {
     font-family: var(--font-head);
     color: var(--neon-blue);

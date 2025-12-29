@@ -1,13 +1,10 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Octo Command // Login</title>
-    <link
-        href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Roboto:wght@300;400&display=swap"
-        rel="stylesheet">
+    <title>Octo Command // Register</title>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Roboto:wght@300;400&display=swap" rel="stylesheet">
     <style>
         body {
             background-color: #050a10;
@@ -24,11 +21,11 @@
 
         .login-container {
             text-align: center;
-            border: 1px solid rgba(0, 243, 255, 0.3);
+            border: 1px solid rgba(188, 19, 254, 0.3);
             padding: 40px;
             border-radius: 10px;
             background: rgba(16, 24, 35, 0.95);
-            box-shadow: 0 0 30px rgba(0, 243, 255, 0.15);
+            box-shadow: 0 0 30px rgba(188, 19, 254, 0.15);
             position: relative;
             width: 320px;
         }
@@ -36,23 +33,20 @@
         .login-container::before {
             content: "";
             position: absolute;
-            top: -2px;
-            left: -2px;
-            right: -2px;
-            bottom: -2px;
-            background: linear-gradient(45deg, #00f3ff, #bc13fe);
+            top: -2px; left: -2px; right: -2px; bottom: -2px;
+            background: linear-gradient(45deg, #bc13fe, #00f3ff);
             z-index: -1;
             border-radius: 12px;
             opacity: 0.6;
         }
 
         h1 {
-            color: #00f3ff;
+            color: #bc13fe;
             letter-spacing: 2px;
             margin-bottom: 10px;
             font-size: 1.4rem;
         }
-
+        
         .subtitle {
             font-family: 'Roboto', sans-serif;
             font-size: 0.8rem;
@@ -60,9 +54,7 @@
             margin-bottom: 30px;
         }
 
-        .input-group {
-            margin-bottom: 15px;
-        }
+        .input-group { margin-bottom: 15px; }
 
         input {
             width: 100%;
@@ -71,7 +63,6 @@
             color: #fff;
             padding: 12px;
             font-family: 'Roboto', sans-serif;
-            /* Readable for password */
             font-size: 1rem;
             text-align: center;
             outline: none;
@@ -80,14 +71,14 @@
         }
 
         input:focus {
-            border-color: #00f3ff;
-            box-shadow: 0 0 10px rgba(0, 243, 255, 0.2);
+            border-color: #bc13fe;
+            box-shadow: 0 0 10px rgba(188, 19, 254, 0.2);
         }
 
         button {
             width: 100%;
-            background: #00f3ff;
-            color: #000;
+            background: #bc13fe;
+            color: #fff;
             border: none;
             padding: 12px;
             font-family: 'Orbitron', sans-serif;
@@ -98,26 +89,15 @@
             transition: 0.2s;
         }
 
-        button:hover {
-            background: #fff;
-            transform: scale(1.02);
-        }
+        button:hover { background: #fff; color: #000; transform: scale(1.02); }
 
         .links {
             margin-top: 20px;
             font-size: 0.8rem;
             font-family: 'Roboto', sans-serif;
         }
-
-        .links a {
-            color: #bc13fe;
-            text-decoration: none;
-        }
-
-        .links a:hover {
-            color: #fff;
-            text-decoration: underline;
-        }
+        .links a { color: #00f3ff; text-decoration: none; }
+        .links a:hover { color: #fff; text-decoration: underline; }
 
         .flash-msg {
             color: #ff003c;
@@ -127,17 +107,16 @@
         }
     </style>
 </head>
-
 <body>
 
     <div class="login-container">
-        <h1>COMMAND ACCESS</h1>
-        <div class="subtitle">SECURITY LEVEL: TOP SECRET</div>
+        <h1>NEW CREDENTIALS</h1>
+        <div class="subtitle">INITIALIZING COMMANDER PROFILE</div>
 
         {% with messages = get_flashed_messages() %}
-        {% if messages %}
-        <div class="flash-msg">{{ messages[0] }}</div>
-        {% endif %}
+          {% if messages %}
+            <div class="flash-msg">{{ messages[0] }}</div>
+          {% endif %}
         {% endwith %}
 
         <form method="POST">
@@ -145,16 +124,15 @@
                 <input type="text" name="username" placeholder="Username" required autocomplete="off">
             </div>
             <div class="input-group">
-                <input type="password" name="password" placeholder="Password" required>
+                <input type="password" name="password" placeholder="SET Password" required>
             </div>
-            <button type="submit">AUTHENTICATE</button>
+            <button type="submit">CONFIRM IDENTITY</button>
         </form>
-
+        
         <div class="links">
-            NEW COMMANDER? <a href="{{ url_for('register') }}">Register PROFILE</a>
+            ALREADY AUTHORIZED? <a href="{{ url_for('login') }}">LOGIN HERE</a>
         </div>
     </div>
 
 </body>
-
 </html>
