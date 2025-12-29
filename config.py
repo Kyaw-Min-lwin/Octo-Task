@@ -1,2 +1,7 @@
-SQLALCHEMY_DATABASE_URI = "postgresql://postgres:[YOUR-PASSWORD]@db.klmgkoeyhcqokeojritp.supabase.co:5432/postgres"
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
+SQLALCHEMY_DATABASE_URI = os.getenv("DATABASE_URI")
+
 SQLALCHEMY_TRACK_MODIFICATIONS = False

@@ -409,8 +409,13 @@ def focus_view(task_id):
 
     return render_template("focus.html", task_json=task_data)
 
-# Add this temporarily to create tables on the first run
-with app.app_context():
-    db.create_all()
+
+# ... existing imports ...
+
 if __name__ == "__main__":
-    app.run(debug=True)
+    # Remove this block later if you want strict migrations
+    with app.app_context():
+        db.create_all()
+        print("Tables created successfully.")
+
+    app.run(debug=True, port=7860)
