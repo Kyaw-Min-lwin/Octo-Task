@@ -1,2 +1,2 @@
-SQLALCHEMY_DATABASE_URI = "postgresql://flask_user:password123@localhost:5432/flask_db"
+SQLALCHEMY_DATABASE_URI = "postgresql://postgres:[YOUR-PASSWORD]@db.klmgkoeyhcqokeojritp.supabase.co:5432/postgres"
 SQLALCHEMY_TRACK_MODIFICATIONS = False
